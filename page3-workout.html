@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ForgeBody — AI Workout Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@300;400;500&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:       #17150f;
+      --bg-card:  #211e15;
+      --bg-dark:  #0f0d09;
+      --olive:    #525638;
+      --olive-lt: #737a50;
+      --tan:      #c8aa62;
+      --tan-lt:   #dcc48a;
+      --offwhite: #ede8db;
+      --muted:    #8a8478;
+      --rust:     #9b4a28;
+      --border:   rgba(82,86,56,0.4);
+      --success:  #5a8a5a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--offwhite);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--bg-dark);
+      border-bottom: 1px solid var(--olive);
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .brand {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.15em;
+      color: var(--tan);
+      font-weight: 700;
+    }
+
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--tan); }
+
+    /* ── LAYOUT ── */
+    .page-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 3rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 3rem;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--tan);
+      margin-bottom: 0.75rem;
+    }
+
+    .hero h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      letter-spacing: 0.08em;
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 span { color: var(--tan); }
+
+    .hero p {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+
+    /* ── FORM ── */
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+
+    .field-group label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--tan);
+      font-weight: 600;
+    }
+
+    .field-group input,
+    .field-group select,
+    .field-group textarea {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      color: var(--offwhite);
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.95rem;
+      padding: 0.65rem 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    .field-group input:focus,
+    .field-group select:focus,
+    .field-group textarea:focus { border-color: var(--tan); }
+
+    .field-group select { cursor: pointer; }
+    .field-group textarea { min-height: 70px; resize: vertical; }
+
+    /* Goal pills */
+    .goal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .goal-pill {
+      background: var(--bg-dark);
+      border: 1.5px solid var(--border);
+      padding: 0.9rem 1rem;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      user-select: none;
+    }
+
+    .goal-pill:hover { border-color: var(--olive-lt); }
+
+    .goal-pill.selected {
+      border-color: var(--tan);
+      background: rgba(200,170,98,0.08);
+    }
+
+    .goal-pill .icon { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
+
+    .goal-pill .label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--offwhite);
+      font-weight: 600;
+    }
+
+    .goal-pill .sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Section label inside form */
+    .form-section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.4rem;
+    }
+
+    /* Generate button */
+    .btn-generate {
+      display: block;
+      width: 100%;
+      background: var(--tan);
+      color: var(--bg-dark);
+      border: none;
+      font-family: 'Oswald', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      padding: 1.1rem 2rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      margin-top: 1.25rem;
+    }
+
+    .btn-generate:hover:not(:disabled) { background: var(--tan-lt); transform: translateY(-1px); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── LOADING STATE ── */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      margin-bottom: 2rem;
+    }
+
+    .loading.active { display: block; }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--border);
+      border-top-color: var(--tan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading p {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── RESULTS ── */
+    #results { display: none; }
+    #results.active { display: block; }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--olive);
+    }
+
+    .results-header h2 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.08em;
+      color: var(--tan);
+    }
+
+    .results-header p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .btn-print {
+      background: transparent;
+      border: 1px solid var(--olive-lt);
+      color: var(--offwhite);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.4rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-print:hover { border-color: var(--tan); color: var(--tan); }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.4rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-reset:hover { border-color: var(--muted); color: var(--offwhite); }
+
+    /* Plan output rendered as formatted HTML */
+    #plan-output {
+      font-size: 0.95rem;
+      line-height: 1.75;
+    }
+
+    #plan-output h2 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.5rem;
+      color: var(--tan);
+      letter-spacing: 0.08em;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #plan-output h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.1rem;
+      color: var(--offwhite);
+      letter-spacing: 0.06em;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    #plan-output h4 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--tan);
+      margin-top: 1.25rem;
+      margin-bottom: 0.4rem;
+    }
+
+    #plan-output p {
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    #plan-output ul, #plan-output ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--muted);
+    }
+
+    #plan-output li { margin-bottom: 0.35rem; line-height: 1.7; }
+    #plan-output li::marker { color: var(--tan); }
+
+    #plan-output strong { color: var(--offwhite); font-weight: 500; }
+
+    #plan-output .day-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    #plan-output .day-block h3 {
+      margin-top: 0;
+    }
+
+    /* ── ERROR ── */
+    .error-msg {
+      background: rgba(155,74,40,0.15);
+      border: 1px solid var(--rust);
+      padding: 1rem 1.25rem;
+      color: #d4826a;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .error-msg.active { display: block; }
+
+    /* ── PRINT ── */
+    @media print {
+      nav, .form-card, .loading, .btn-print, .btn-reset, .hero { display: none !important; }
+      body { background: white; color: black; }
+      #results { display: block !important; }
+      #plan-output * { color: black !important; border-color: #ccc !important; background: white !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <span class="brand">ForgeBody</span>
+    <ul class="nav-links">
+      <li><a href="page2-firearms.html">← Firearms Page</a></li>
+      <li><a href="index.html">Professional Site</a></li>
+    </ul>
+  </nav>
+
+  <div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+      <p class="hero-eyebrow">AI-Powered · Personalized</p>
+      <h1>Forge<span>Body</span></h1>
+      <p>Enter your stats, pick your goal, and receive a complete custom workout plan built specifically for you — in seconds.</p>
+    </div>
+
+    <!-- FORM -->
+    <div class="form-card">
+
+      <!-- PHYSICAL STATS -->
+      <p class="form-section-label">Your Stats</p>
+      <div class="form-grid">
+        <div class="field-group">
+          <label for="age">Age</label>
+          <input type="number" id="age" min="13" max="99" placeholder="e.g. 22" />
+        </div>
+        <div class="field-group">
+          <label for="weight">Weight (lbs)</label>
+          <input type="number" id="weight" min="80" max="500" placeholder="e.g. 185" />
+        </div>
+        <div class="field-group">
+          <label for="height">Height</label>
+          <input type="text" id="height" placeholder="e.g. 6'1&quot;" />
+        </div>
+        <div class="field-group">
+          <label for="sex">Biological Sex</label>
+          <select id="sex">
+            <option value="">Select…</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="fitness">Current Fitness Level</label>
+          <select id="fitness">
+            <option value="">Select…</option>
+            <option value="beginner">Beginner (0–6 months)</option>
+            <option value="intermediate">Intermediate (6 mo – 2 yr)</option>
+            <option value="advanced">Advanced (2+ years)</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="days">Days per Week</label>
+          <select id="days">
+            <option value="">Select…</option>
+            <option value="3">3 days</option>
+            <option value="4">4 days</option>
+            <option value="5">5 days</option>
+            <option value="6">6 days</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- GOAL -->
+      <p class="form-section-label">Primary Goal</p>
+      <div class="goal-grid" id="goalGrid">
+        <div class="goal-pill" data-goal="lose_weight">
+          <span class="icon">🔥</span>
+          <span class="label">Lose Weight</span>
+          <span class="sub">Cut &amp; burn fat</span>
+        </div>
+        <div class="goal-pill" data-goal="build_muscle">
+          <span class="icon">💪</span>
+          <span class="label">Build Muscle</span>
+          <span class="sub">Hypertrophy &amp; size</span>
+        </div>
+        <div class="goal-pill" data-goal="gain_strength">
+          <span class="icon">🏋️</span>
+          <span class="label">Gain Strength</span>
+          <span class="sub">Max power &amp; lifts</span>
+        </div>
+        <div class="goal-pill" data-goal="endurance">
+          <span class="icon">🏃</span>
+          <span class="label">Endurance</span>
+          <span class="sub">Cardio &amp; stamina</span>
+        </div>
+        <div class="goal-pill" data-goal="athletic">
+          <span class="icon">⚡</span>
+          <span class="label">Athletic Perf.</span>
+          <span class="sub">Speed &amp; agility</span>
+        </div>
+        <div class="goal-pill" data-goal="general">
+          <span class="icon">🎯</span>
+          <span class="label">General Fitness</span>
+          <span class="sub">Balanced health</span>
+        </div>
+      </div>
+
+      <!-- INJURIES / NOTES -->
+      <p class="form-section-label">Injuries or Limitations (optional)</p>
+      <div class="field-group" style="margin-bottom:0">
+        <textarea id="injuries" placeholder="e.g. Bad left knee, avoid heavy squats. Lower back issues. No overhead pressing."></textarea>
+      </div>
+
+      <div class="error-msg" id="errorMsg">
+        ⚠ Please fill in your age, weight, fitness level, days per week, and select a goal before generating.
+      </div>
+
+      <button class="btn-generate" id="generateBtn" onclick="generatePlan()">
+        ⚡ Generate My Workout Plan
+      </button>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Building your personalized plan…</p>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results">
+      <div class="results-header">
+        <div>
+          <h2 id="planTitle">Your Plan</h2>
+          <p id="planSubtitle"></p>
+        </div>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <button class="btn-print" onclick="window.print()">🖨 Print Plan</button>
+          <button class="btn-reset" onclick="resetForm()">↩ Start Over</button>
+        </div>
+      </div>
+      <div id="plan-output"></div>
+    </div>
+
+  </div><!-- end .page-wrap -->
+
+  <style>
+    .exercise-table { width:100%; border-collapse:collapse; margin-bottom:1rem; font-size:0.875rem; }
+    .exercise-table th { font-family:'Barlow Condensed',sans-serif; font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--tan); padding:0.5rem 0.75rem; border-bottom:1px solid var(--border); text-align:left; background:var(--bg-dark); }
+    .exercise-table td { padding:0.55rem 0.75rem; border-bottom:1px solid rgba(82,86,56,0.2); color:var(--offwhite); vertical-align:top; }
+    .exercise-table tr:last-child td { border-bottom:none; }
+    .exercise-table tr:hover td { background:rgba(200,170,98,0.04); }
+    .plan-summary { font-size:1rem; color:var(--muted); line-height:1.85; margin-bottom:1.5rem; border-left:2px solid var(--tan); padding-left:1.25rem; }
+    .week-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:0.4rem; margin-bottom:2rem; }
+    @media(max-width:600px){ .week-grid{grid-template-columns:repeat(4,1fr);} }
+    .week-day { padding:0.6rem 0.4rem; text-align:center; border:1px solid var(--border); }
+    .week-day.train { border-color:var(--olive-lt); background:rgba(82,86,56,0.15); }
+    .week-day.rest { opacity:0.45; }
+    .wd-name { display:block; font-family:'Barlow Condensed',sans-serif; font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--tan); margin-bottom:0.25rem; }
+    .wd-label { display:block; font-size:0.72rem; color:var(--muted); line-height:1.3; }
+    .injury-note { background:rgba(155,74,40,0.12); border:1px solid rgba(155,74,40,0.4); padding:0.85rem 1.1rem; font-size:0.875rem; color:#d4826a; margin-bottom:1.5rem; }
+  </style>
+
+  <script>
+    let selectedGoal = '';
+
+    const DB = {
+      chest:{
+        beginner:[['Push-Ups','3','10–12','60s','Keep core tight'],['Incline DB Press','3','10','75s','Control the descent'],['Chest Flye (Machine)','3','12','60s','Full stretch at bottom']],
+        intermediate:[['Barbell Bench Press','4','6–8','90s','Drive feet into floor'],['Incline DB Press','3','10','75s','Retract scapula'],['Cable Crossover','3','12–15','60s','Squeeze at peak'],['Dips','3','8–10','90s','Slight forward lean']],
+        advanced:[['Barbell Bench Press','5','3–5','2min','Competition setup'],['Incline Barbell Press','4','6–8','90s','Touch upper chest'],['DB Flye','3','12','60s','Stretch-focused'],['Cable Crossover','3','15','45s','Drop set last set'],['Machine Press','3','12–15','45s','Pump finisher']]
+      },
+      back:{
+        beginner:[['Lat Pulldown','3','10–12','60s','Pull to upper chest'],['Seated Cable Row','3','12','60s','Elbows close to body'],['DB Row','3','10 each','75s','Support on bench']],
+        intermediate:[['Barbell Row','4','6–8','90s','Hinge at hips, flat back'],['Pull-Ups','3','6–8','90s','Full dead hang'],['Lat Pulldown','3','10–12','60s','Wide grip'],['Face Pulls','3','15','45s','External rotation focus']],
+        advanced:[['Deadlift','4','4–5','3min','Brace hard, push floor away'],['Weighted Pull-Ups','4','6–8','2min','Full ROM'],['Barbell Row','3','6–8','90s','Controlled eccentric'],['Meadows Row','3','10 each','75s','Loaded stretch'],['Straight-Arm Pulldown','3','15','45s','Lats only']]
+      },
+      legs:{
+        beginner:[['Goblet Squat','3','12','60s','Heels shoulder-width'],['Leg Press','3','12','75s','Full depth'],['Romanian Deadlift','3','10','75s','Hinge, not squat'],['Leg Curl (Machine)','3','12','60s','Slow eccentric']],
+        intermediate:[['Barbell Back Squat','4','6–8','2min','Depth past parallel'],['Romanian Deadlift','3','10','90s','Feel hamstring stretch'],['Leg Press','3','12–15','75s','High foot placement'],['Walking Lunges','3','12 each','60s','Long stride'],['Leg Curl','3','12','60s','']],
+        advanced:[['Barbell Back Squat','5','3–5','3min','Belt on top sets'],['Front Squat','3','5–6','2min','Upright torso'],['Romanian Deadlift','4','8','90s','Bar stays close'],['Hack Squat','3','10–12','90s','Quad focus'],['Nordic Curl','3','6–8','90s','Eccentric-focused'],['Leg Curl','3','10–12','60s','']]
+      },
+      shoulders:{
+        beginner:[['DB Overhead Press','3','10','75s','Seated for stability'],['Lateral Raise','3','12','60s','Slight bend in elbow'],['Front Raise','3','12','60s','Alternate arms']],
+        intermediate:[['Barbell Overhead Press','4','6–8','90s','Standing, brace core'],['Lateral Raise','3','15','45s','Slow eccentric'],['Face Pulls','3','15','45s','High anchor'],['Rear Delt Flye','3','15','45s','Prone on incline bench']],
+        advanced:[['Barbell Overhead Press','5','3–5','3min','Push press on last set'],['DB Lateral Raise','4','12–15','45s','Drop set on last'],['Cable Lateral Raise','3','15 each','45s','Unilateral'],['Face Pulls','3','20','45s',''],['Rear Delt Machine Flye','3','15','45s','']]
+      },
+      arms:{
+        beginner:[['Barbell Curl','3','10','60s','No swinging'],['Tricep Pushdown','3','12','60s','Elbows fixed'],['Hammer Curl','3','10','60s','Neutral grip']],
+        intermediate:[['EZ-Bar Curl','3','10','75s','Full extension at bottom'],['Skull Crushers','3','10','75s','Bar to forehead'],['Incline DB Curl','3','12','60s','Stretch at bottom'],['Overhead Tricep Extension','3','12','60s','']],
+        advanced:[['Barbell Curl','4','8','75s','Cheat curl on last set'],['Close-Grip Bench Press','4','6–8','90s','Tricep focus'],['Incline DB Curl','3','12','60s',''],['Skull Crushers','3','10','75s',''],['Cable Curl','3','15','45s','Peak contraction'],['Cable Pushdown','3','15','45s','Rope attachment']]
+      },
+      core:{
+        beginner:[['Plank','3','30s hold','45s','Build to 60s'],['Dead Bug','3','10 each','45s','Lower back flat'],['Bicycle Crunch','3','15 each','45s','']],
+        intermediate:[['Hanging Knee Raise','3','15','60s','No swinging'],['Ab Wheel Rollout','3','10','60s','Control return'],['Cable Crunch','3','15','60s','Round the spine'],['Plank','3','45s hold','45s','']],
+        advanced:[['Hanging Leg Raise','4','12–15','60s','Full ROM'],['Ab Wheel Rollout','3','12','60s',''],['Pallof Press','3','12 each','60s','Anti-rotation'],['Dragon Flag','3','6–8','90s','Scale if needed']]
+      },
+      cardio:{
+        lose_weight:[['Treadmill Incline Walk','—','25–30 min','—','Zone 2 heart rate'],['Jump Rope','—','5×2 min','60s between','Steady pace'],['Rowing Machine','—','15 min','—','Moderate effort']],
+        endurance:[['Tempo Run','—','25–30 min','—','Comfortably hard pace'],['Stationary Bike','—','35–45 min','—','Sustained effort'],['Stairmaster','—','20 min','—','Steady state']],
+        athletic:[['Sprint Intervals','—','8×30s','90s between','Max effort'],['Box Jumps','4','8','90s','Soft landing'],['Lateral Shuffle Drills','3','30s','60s','Change of direction']],
+        general:[['Brisk Walk / Light Jog','—','20 min','—','Warm up the system'],['Jump Rope','—','3×2 min','60s between',''],['Cycling','—','15 min','—','Cool down pace']]
+      }
+    };
+
+    const SPLITS = {
+      3:{
+        lose_weight:[['Full Body A','chest','back','legs','core'],['Full Body B','shoulders','legs','arms','core'],['Full Body + Cardio','chest','back','cardio']],
+        build_muscle:[['Push','chest','shoulders','arms'],['Pull','back','arms'],['Legs & Core','legs','core']],
+        gain_strength:[['Squat Focus','legs','core'],['Press Focus','chest','shoulders','arms'],['Hinge Focus','back','legs']],
+        endurance:[['Upper + Cardio','chest','back','shoulders'],['Lower + Cardio','legs','core'],['Cardio Session','cardio']],
+        athletic:[['Power Lower','legs','core'],['Power Upper','chest','back','shoulders'],['Speed & Agility','cardio','core']],
+        general:[['Upper Body','chest','back','shoulders'],['Lower Body','legs','core'],['Full Body','chest','legs','arms','core']]
+      },
+      4:{
+        lose_weight:[['Upper A + Cardio','chest','back'],['Lower A + Cardio','legs','core'],['Push + Cardio','chest','shoulders','arms'],['Pull + Legs','back','legs','cardio']],
+        build_muscle:[['Chest & Tris','chest','arms'],['Back & Bis','back','arms'],['Legs','legs','core'],['Shoulders & Arms','shoulders','arms']],
+        gain_strength:[['Squat Day','legs','core'],['Bench Day','chest','shoulders'],['Deadlift Day','back','legs'],['OHP Day','shoulders','arms','core']],
+        endurance:[['Upper Endurance','chest','back'],['Lower Endurance','legs','core'],['Cardio A','cardio'],['Cardio B','cardio']],
+        athletic:[['Lower Power','legs','core'],['Upper Power','chest','back','shoulders'],['Speed Day','cardio'],['Accessory','arms','core']],
+        general:[['Upper A','chest','back'],['Lower A','legs','core'],['Upper B','shoulders','arms'],['Lower B + Core','legs','core']]
+      },
+      5:{
+        lose_weight:[['Chest + Cardio','chest','core'],['Back + Cardio','back','core'],['Legs','legs','core'],['Shoulders + Cardio','shoulders','arms'],['Cardio','cardio']],
+        build_muscle:[['Chest & Tris','chest','arms'],['Back & Bis','back','arms'],['Legs','legs'],['Shoulders','shoulders','core'],['Arms & Core','arms','core']],
+        gain_strength:[['Squat','legs','core'],['Bench','chest','arms'],['Deadlift','back','legs'],['OHP','shoulders','arms'],['Accessory','back','core']],
+        endurance:[['Upper A','chest','back'],['Cardio A','cardio'],['Lower','legs','core'],['Cardio B','cardio'],['Full Body','chest','shoulders','legs']],
+        athletic:[['Lower Power','legs','core'],['Upper Power','chest','back'],['Speed','cardio'],['Lower Accessory','legs','core'],['Upper Accessory','shoulders','arms']],
+        general:[['Chest & Shoulders','chest','shoulders'],['Back & Bis','back','arms'],['Legs','legs','core'],['Push','chest','shoulders','arms'],['Pull & Core','back','core']]
+      },
+      6:{
+        lose_weight:[['Push','chest','shoulders','arms'],['Pull','back','arms'],['Legs','legs','core'],['Push + Cardio','chest','cardio'],['Pull + Cardio','back','cardio'],['Legs + Cardio','legs','cardio']],
+        build_muscle:[['Chest','chest','core'],['Back','back','core'],['Legs','legs'],['Shoulders','shoulders','arms'],['Chest & Tris','chest','arms'],['Back & Bis','back','arms']],
+        gain_strength:[['Squat A','legs','core'],['Bench A','chest','arms'],['Deadlift A','back','legs'],['Squat B','legs','core'],['Bench B','chest','shoulders'],['Deadlift B','back','core']],
+        endurance:[['Upper A','chest','back'],['Cardio A','cardio'],['Lower A','legs','core'],['Upper B','shoulders','arms'],['Cardio B','cardio'],['Lower B','legs','core']],
+        athletic:[['Lower Power','legs','core'],['Upper Power','chest','back'],['Speed A','cardio'],['Lower Accessory','legs','core'],['Upper Accessory','shoulders','arms'],['Speed B','cardio']],
+        general:[['Push A','chest','shoulders'],['Pull A','back','arms'],['Legs A','legs','core'],['Push B','chest','arms'],['Pull B','back','shoulders'],['Legs B','legs','core']]
+      }
+    };
+
+    const GOAL_LABELS={lose_weight:'Fat Loss & Cutting',build_muscle:'Muscle Building (Hypertrophy)',gain_strength:'Strength & Power',endurance:'Cardiovascular Endurance',athletic:'Athletic Performance',general:'General Fitness & Health'};
+    const GOAL_SUMMARIES={
+      lose_weight:(a,w,f)=>`At ${w} lbs your plan prioritizes a caloric deficit through high-volume training and cardio acceleration. Sessions are structured to maximize calorie burn while preserving lean muscle. Expect active rest periods and compound movements that keep your heart rate elevated.`,
+      build_muscle:(a,w,f)=>`Your hypertrophy plan targets the 8–12 rep range with progressive overload as the core driver. Each session isolates muscle groups to maximize weekly volume per body part. Recovery and nutrition are just as important as the training — eat in a slight surplus.`,
+      gain_strength:(a,w,f)=>`This plan is built around the big compound lifts — squat, bench, deadlift, overhead press. Low reps and high intensity are the priority. Accessory work supports the main lifts. Rest fully between heavy sets; strength is built in recovery.`,
+      endurance:(a,w,f)=>`Your plan balances aerobic base building with muscular endurance work. Cardio sessions target Zone 2 for fat adaptation plus intervals for VO2 max gains. Strength work uses higher reps and shorter rest to complement your cardiovascular capacity.`,
+      athletic:(a,w,f)=>`Athletic performance demands power, speed, and movement quality. This plan combines explosive compound lifts with sprint work and agility drills. Power days build the engine; speed days sharpen the output.`,
+      general:(a,w,f)=>`A balanced plan hitting all major muscle groups throughout the week. Strength, cardiovascular health, and mobility all get attention. This is the kind of training you can sustain for years and actually enjoy.`
+    };
+    const KEY_PRINCIPLES={
+      lose_weight:['Train in a caloric deficit — 300–500 kcal below maintenance','Prioritize compound movements that burn the most calories','Include 2–3 cardio sessions per week alongside lifting','Aim for 0.8–1g protein per lb of bodyweight to preserve muscle'],
+      build_muscle:['Progressive overload every session — add weight or reps each week','Hit each muscle group with 10–20 total sets per week','Eat in a 200–400 kcal surplus with high protein','Sleep 7–9 hours — muscle is built during recovery, not in the gym'],
+      gain_strength:['Focus on the main lifts: squat, bench, deadlift, overhead press','Keep reps low (3–6) and rest long (2–3 min) on primary movements','Eat at maintenance or a slight surplus to fuel performance','Log every session — strength gains require tracking and consistency'],
+      endurance:['Build your aerobic base first — 70% of cardio should be low intensity (Zone 2)','Increase weekly volume by no more than 10% to avoid injury','Stay hydrated — endurance performance drops sharply with even mild dehydration','Strength training supports endurance; don\'t skip lift days'],
+      athletic:['Explosive movements (jumps, sprints) should come first in sessions when fresh','Train movement patterns, not just muscles','Mobility and warm-up are non-negotiable for athletic training','Track performance metrics — sprint times, jump height — not just weight on bar'],
+      general:['Consistency over intensity — showing up 4x/week beats sporadic hard sessions','Hit all major movement patterns: push, pull, hinge, squat','Include both strength and cardio each week for complete fitness','Progress gradually — small improvements compounded over time are everything']
+    };
+    const NUTRITION_TIPS={
+      lose_weight:['Aim for a 300–500 calorie daily deficit — avoid crash dieting which burns muscle','Protein target: 0.8–1g per lb of bodyweight to preserve lean mass','Prioritize whole foods, fiber, and protein at every meal to stay full','Time a moderate-carb meal around workouts for performance and recovery'],
+      build_muscle:['Eat in a 200–400 kcal surplus — dirty bulking adds unnecessary fat','0.8–1g protein per lb bodyweight, spread across 3–5 meals','Carbohydrates are your training fuel — don\'t fear them on lift days','Post-workout: protein + fast carbs within 1–2 hours to kickstart recovery'],
+      gain_strength:['Eat at maintenance or a slight surplus — strength doesn\'t require a big bulk','Pre-workout meal: carbs + protein 1–2 hrs before for sustained energy','Creatine monohydrate (5g/day) is one of the most researched performance enhancers','Prioritize sleep and recovery as much as pre-workout nutrition'],
+      endurance:['Carbohydrates are your primary fuel — don\'t cut them on cardio-heavy days','Hydration: aim for half your bodyweight (lbs) in oz of water daily','For sessions over 60 minutes, consider mid-session carbohydrate intake','Post-endurance: carbs + protein within 30–45 min to replenish glycogen'],
+      athletic:['Fuel performance first — eat enough to train hard and recover fully','Timing matters: a full meal 2–3hrs before, a small snack 30–60 min before intense sessions','Protein 0.7–1g per lb bodyweight to support power and muscle maintenance','Don\'t neglect micronutrients — magnesium, iron, and B vitamins support athletic output'],
+      general:['Eat mostly whole foods — vegetables, lean protein, complex carbs, healthy fats','You don\'t need to count calories — focus on food quality and reasonable portions','Hydrate consistently throughout the day, not just around workouts','Consistent habits matter more than any single "perfect" meal']
+    };
+    const PROGRESSION={
+      lose_weight:'Add 5 lbs to upper body lifts and 10 lbs to lower body lifts every 1–2 weeks. If you can\'t add weight, add a rep or reduce rest time by 5–10 seconds. Increase cardio duration by 5 minutes each week until you reach 45 min, then increase intensity.',
+      build_muscle:'Use double progression: work within your rep range (e.g. 8–12) and once you hit the top of the range for all sets, add weight next session. Track every workout. Aim to add weight every 1–2 weeks on major lifts.',
+      gain_strength:'Linear progression: add 5 lbs to the bar each session on upper body, 10 lbs on lower body. When you stall on a lift for 2 sessions in a row, deload (use 80% of max) for one session, then push past the stall.',
+      endurance:'Increase total weekly cardio volume by no more than 10% per week. Every 4th week, reduce volume by 30% (deload week). On strength work, progress reps before weight — add 1–2 reps per set weekly, then add weight.',
+      athletic:'Track performance outputs — sprint times, jump height, bar weight — not just volume. Power lifts progress like strength work. Speed work progresses by reducing rest intervals over time.',
+      general:'Aim to improve something every week — one more rep, slightly more weight, or 10 more seconds on a hold. Every 4–6 weeks, increase the difficulty of at least one exercise per session.'
+    };
+
+    document.querySelectorAll('.goal-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.goal-pill').forEach(p => p.classList.remove('selected'));
+        pill.classList.add('selected');
+        selectedGoal = pill.dataset.goal;
+      });
+    });
+
+    function resetForm() {
+      document.getElementById('results').classList.remove('active');
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('plan-output').innerHTML = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function getLevelKey(f){ return f==='beginner'?'beginner':f==='intermediate'?'intermediate':'advanced'; }
+    function getMuscleLabel(m){ return {chest:'Chest',back:'Back',legs:'Legs',shoulders:'Shoulders',arms:'Arms',core:'Core',cardio:'Cardio'}[m]||m; }
+
+    function getExercises(muscle, level, goal){
+      if(muscle==='cardio'){
+        const cg=['lose_weight','endurance','athletic'].includes(goal)?goal:'general';
+        return DB.cardio[cg]||DB.cardio.general;
+      }
+      const g=DB[muscle]; if(!g) return [];
+      return g[level]||g['intermediate'];
+    }
+
+    function buildTable(exList){
+      if(!exList.length) return '';
+      const rows=exList.map(([n,s,r,rest,notes])=>`<tr><td><strong>${n}</strong></td><td>${s}</td><td>${r}</td><td>${rest}</td><td style="color:var(--muted);font-size:0.82rem;">${notes||'—'}</td></tr>`).join('');
+      return `<table class="exercise-table"><thead><tr><th>Exercise</th><th>Sets</th><th>Reps / Duration</th><th>Rest</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    function generatePlan() {
+      const age     = document.getElementById('age').value;
+      const weight  = document.getElementById('weight').value;
+      const height  = document.getElementById('height').value;
+      const sex     = document.getElementById('sex').value;
+      const fitness = document.getElementById('fitness').value;
+      const days    = parseInt(document.getElementById('days').value);
+      const injuries= document.getElementById('injuries').value;
+      const errorEl = document.getElementById('errorMsg');
+
+      if (!age || !weight || !fitness || !days || !selectedGoal) {
+        errorEl.textContent = '⚠ Please fill in your age, weight, fitness level, days per week, and select a goal.';
+        errorEl.classList.add('active');
+        return;
+      }
+      errorEl.classList.remove('active');
+
+      document.getElementById('loading').classList.add('active');
+      document.getElementById('generateBtn').disabled = true;
+      document.getElementById('results').style.display = 'none';
+
+      setTimeout(() => {
+        const level     = getLevelKey(fitness);
+        const goalLabel = GOAL_LABELS[selectedGoal];
+        const split     = SPLITS[days]?.[selectedGoal] || SPLITS[days]?.general;
+        const dayNames  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+        let html = `<p class="plan-summary">${GOAL_SUMMARIES[selectedGoal](age, weight, fitness)}</p>`;
+
+        // Key Principles
+        html += `<h2>Key Principles</h2><ul>` + KEY_PRINCIPLES[selectedGoal].map(p=>`<li>${p}</li>`).join('') + `</ul>`;
+
+        // Weekly Schedule
+        html += `<h2>Weekly Schedule</h2><div class="week-grid">`;
+        let ti = 0;
+        for(let i=0;i<7;i++){
+          if(ti < days){
+            const lbl = split[ti] ? split[ti][0] : 'Training Day';
+            html += `<div class="week-day train"><span class="wd-name">${dayNames[i]}</span><span class="wd-label">${lbl}</span></div>`;
+            ti++;
+          } else {
+            html += `<div class="week-day rest"><span class="wd-name">${dayNames[i]}</span><span class="wd-label">Rest</span></div>`;
+          }
+        }
+        html += `</div>`;
+
+        // Injury note
+        if(injuries && injuries.trim()){
+          html += `<div class="injury-note">⚠ <strong>Injury note:</strong> ${injuries.trim()} — modify or swap any exercises that aggravate these areas.</div>`;
+        }
+
+        // Training days
+        split.forEach((dayDef, idx) => {
+          const [dayName, ...muscles] = dayDef;
+          html += `<div class="day-block"><h3>Day ${idx+1} — ${dayName}</h3>`;
+          [...new Set(muscles)].forEach(muscle => {
+            const exList = getExercises(muscle, level, selectedGoal);
+            const limit  = level==='beginner'?3:level==='intermediate'?4:exList.length;
+            const chosen = exList.slice(0, limit);
+            if(!chosen.length) return;
+            html += `<h4>${getMuscleLabel(muscle)}</h4>` + buildTable(chosen);
+          });
+          html += `</div>`;
+        });
+
+        // Nutrition
+        html += `<h2>Nutrition Tips</h2><ul>` + NUTRITION_TIPS[selectedGoal].map(t=>`<li>${t}</li>`).join('') + `</ul>`;
+
+        // Progression
+        html += `<h2>Progressive Overload</h2><p>${PROGRESSION[selectedGoal]}</p>`;
+
+        document.getElementById('loading').classList.remove('active');
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('planTitle').textContent = `Your ${goalLabel} Plan`;
+        document.getElementById('planSubtitle').textContent = `${age} yr · ${weight} lbs${height?' · '+height:''} · ${fitness} · ${days} days/week`;
+        document.getElementById('plan-output').innerHTML = html;
+
+        const resultsEl = document.getElementById('results');
+        resultsEl.style.display = 'block';
+        resultsEl.classList.add('active');
+        resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 900);
+    }
+  </script>
+
+</body>
+</html>
